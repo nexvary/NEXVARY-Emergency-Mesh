@@ -51,19 +51,25 @@ jobs:
           disable-animations: true
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: |
+            set -e
             mkdir -p ci-artifacts
             adb logcat -c
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb shell am force-stop com.nexvary.emergencymesh.debug
             adb shell am start -W -n com.nexvary.emergencymesh.debug/com.nexvary.emergencymesh.MainActivity > ci-artifacts/start.txt 2>&1
-            sleep 8
+            sleep 5
             adb shell pidof com.nexvary.emergencymesh.debug > ci-artifacts/pid.txt || true
             adb shell dumpsys activity activities > ci-artifacts/activity.txt
             adb shell dumpsys window windows > ci-artifacts/window.txt
             adb logcat -d -v threadtime > ci-artifacts/logcat.txt
             adb exec-out screencap -p > ci-artifacts/home-ar.png
             test -s ci-artifacts/home-ar.png
+            test -s ci-artifacts/pid.txt
             grep -q 'com.nexvary.emergencymesh.debug/com.nexvary.emergencymesh.MainActivity' ci-artifacts/activity.txt
+            if grep -q 'FATAL EXCEPTION.*\|Process: com.nexvary.emergencymesh.debug' ci-artifacts/logcat.txt; then
+              echo 'Fatal runtime crash detected'
+              exit 1
+            fi
 
       - name: Upload emulator screenshot and diagnostics
         if: always()
