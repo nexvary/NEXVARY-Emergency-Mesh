@@ -71,10 +71,27 @@ public class MeshCoreTest {
             if (maybe != null) result = maybe;
         }
         assertEquals(payload, result);
-
         String first = chunks.get(0);
         String corrupt = first.substring(0, first.length() - 1) + (first.endsWith("A") ? "B" : "A");
         RadioChunker.Reassembler bad = new RadioChunker.Reassembler(600_000L);
         assertNull(bad.offer(corrupt, now));
+    }
+
+    @Test public void routerDeliversBroadcastRelaysDirectAndDropsDuplicate() {
+        long now = 1_800_000_000_000L;
+        MeshRouter router = new MeshRouter("node-b", new ReplayGuard(128, 60_000L));
+        MeshPacket broadcast = MeshPacket.create("node-a", "CHANNEL:rescue", "CHANNEL", "help", now, MeshPacket.Priority.HIGH);
+        assertEquals(MeshRouter.Action.DELIVER_AND_RELAY, router.inspect(broadcast, now));
+        assertEquals(MeshRouter.Action.DROP, router.inspect(broadcast, now));
+
+        MeshRouter directRouter = new MeshRouter("node-b", new ReplayGuard(128, 60_000L));
+        MeshPacket direct = MeshPacket.create("node-a", "node-c", "NODE", "direct", now, MeshPacket.Priority.NORMAL);
+        assertEquals(MeshRouter.Action.RELAY, directRouter.inspect(direct, now));
+        MeshPacket relayed = directRouter.relay(direct, now);
+        assertNotNull(relayed);
+        assertEquals(1, relayed.hop);
+
+        MeshRouter destination = new MeshRouter("node-c", new ReplayGuard(128, 60_000L));
+        assertEquals(MeshRouter.Action.DELIVER, destination.inspect(relayed, now));
     }
 }
