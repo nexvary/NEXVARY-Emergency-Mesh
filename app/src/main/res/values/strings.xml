@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NEXVARY Emergency Mesh</string>
+    <string name="brand">NEXVARY</string>
+    <string name="title">Emergency Mesh</string>
+    <string name="subtitle">شبكة طوارئ لامركزية تعمل بدون إنترنت</string>
+    <string name="status_ready">جاهز للعمل دون اتصال</string>
+    <string name="nodes">العُقد</string>
+    <string name="pending">معلّقة</string>
+    <string name="trusted">موثوقة</string>
+    <string name="radio">الراديو</string>
+    <string name="mesh_status">حالة الشبكة</string>
+    <string name="mesh_status_value">Bluetooth + Wi‑Fi Direct + Meshtastic</string>
+    <string name="sos">نداء استغاثة SOS</string>
+    <string name="sos_hint">إرسال تنبيه طوارئ محلي إلى العقد القريبة</string>
+    <string name="messages">المحادثات</string>
+    <string name="radar">الرادار</string>
+    <string name="map">الخريطة</string>
+    <string name="diagnostics">التشخيص</string>
+    <string name="language">EN</string>
+    <string name="offline_badge">OFFLINE • ENCRYPTED • LOCAL-FIRST</string>
+    <string name="toast_sos">تم تجهيز نداء الطوارئ تجريبيًا</string>
+    <string name="toast_action">هذه الوحدة ستُفعّل بعد اجتياز اختبارات الاتصال</string>
+</resources>
