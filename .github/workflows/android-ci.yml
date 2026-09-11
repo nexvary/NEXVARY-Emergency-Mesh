@@ -1,0 +1,67 @@
+name: Android CI + Emulator Screenshot
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-screenshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build, unit tests and lint
+        run: gradle --no-daemon clean assembleDebug testDebugUnitTest lintDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NEXVARY-Emergency-Mesh-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Boot emulator, install APK and capture Arabic UI
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: |
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb shell am force-stop com.nexvary.emergencymesh.debug
+            adb shell am start -W -n com.nexvary.emergencymesh.debug/com.nexvary.emergencymesh.MainActivity
+            sleep 4
+            mkdir -p ci-artifacts
+            adb exec-out screencap -p > ci-artifacts/home-ar.png
+            adb shell uiautomator dump /sdcard/window.xml
+            adb pull /sdcard/window.xml ci-artifacts/window.xml
+            adb shell dumpsys activity activities > ci-artifacts/activity.txt
+
+      - name: Upload emulator screenshot and UI dump
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NEXVARY-Emergency-Mesh-emulator-proof
+          path: ci-artifacts/
+          if-no-files-found: warn
