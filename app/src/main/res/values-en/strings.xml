@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NEXVARY Emergency Mesh</string>
+    <string name="brand">NEXVARY</string>
+    <string name="title">Emergency Mesh</string>
+    <string name="subtitle">Decentralized emergency communications without internet</string>
+    <string name="status_ready">Ready for offline operation</string>
+    <string name="nodes">Nodes</string>
+    <string name="pending">Pending</string>
+    <string name="trusted">Trusted</string>
+    <string name="radio">Radio</string>
+    <string name="mesh_status">Mesh status</string>
+    <string name="mesh_status_value">Bluetooth + Wi‑Fi Direct + Meshtastic</string>
+    <string name="sos">SOS Emergency Beacon</string>
+    <string name="sos_hint">Send a local emergency alert to nearby nodes</string>
+    <string name="messages">Messages</string>
+    <string name="radar">Radar</string>
+    <string name="map">Map</string>
+    <string name="diagnostics">Diagnostics</string>
+    <string name="language">AR</string>
+    <string name="offline_badge">OFFLINE • ENCRYPTED • LOCAL-FIRST</string>
+    <string name="toast_sos">Emergency beacon prepared in test mode</string>
+    <string name="toast_action">This module will be enabled after transport tests pass</string>
+</resources>
