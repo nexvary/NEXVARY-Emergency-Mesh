@@ -29,6 +29,10 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Enable KVM
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+
       - name: Build, unit tests and lint
         run: gradle --no-daemon clean assembleDebug testDebugUnitTest lintDebug
 
@@ -47,17 +51,21 @@ jobs:
           disable-animations: true
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: |
+            mkdir -p ci-artifacts
+            adb logcat -c
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb shell am force-stop com.nexvary.emergencymesh.debug
-            adb shell am start -W -n com.nexvary.emergencymesh.debug/com.nexvary.emergencymesh.MainActivity
-            sleep 4
-            mkdir -p ci-artifacts
-            adb exec-out screencap -p > ci-artifacts/home-ar.png
-            adb shell uiautomator dump /sdcard/window.xml
-            adb pull /sdcard/window.xml ci-artifacts/window.xml
+            adb shell am start -W -n com.nexvary.emergencymesh.debug/com.nexvary.emergencymesh.MainActivity > ci-artifacts/start.txt 2>&1
+            sleep 8
+            adb shell pidof com.nexvary.emergencymesh.debug > ci-artifacts/pid.txt || true
             adb shell dumpsys activity activities > ci-artifacts/activity.txt
+            adb shell dumpsys window windows > ci-artifacts/window.txt
+            adb logcat -d -v threadtime > ci-artifacts/logcat.txt
+            adb exec-out screencap -p > ci-artifacts/home-ar.png
+            test -s ci-artifacts/home-ar.png
+            grep -q 'com.nexvary.emergencymesh.debug/com.nexvary.emergencymesh.MainActivity' ci-artifacts/activity.txt
 
-      - name: Upload emulator screenshot and UI dump
+      - name: Upload emulator screenshot and diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
