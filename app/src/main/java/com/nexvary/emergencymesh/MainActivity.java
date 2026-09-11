@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -37,20 +36,32 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        configureWindow();
+        configureWindowColors();
         configureLanguage();
-        setContentView(buildScreen());
+        View screen = buildScreen();
+        setContentView(screen);
+        screen.post(this::applySystemBarAppearance);
     }
 
-    private void configureWindow() {
+    private void configureWindowColors() {
         Window w = getWindow();
         w.setStatusBarColor(BG);
         w.setNavigationBarColor(BG);
+    }
+
+    private void applySystemBarAppearance() {
         if (android.os.Build.VERSION.SDK_INT >= 30) {
-            WindowInsetsController c = w.getInsetsController();
-            if (c != null) c.setSystemBarsAppearance(0,
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS |
-                            WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+            View decor = getWindow().getDecorView();
+            if (decor != null) {
+                WindowInsetsController controller = decor.getWindowInsetsController();
+                if (controller != null) {
+                    controller.setSystemBarsAppearance(0,
+                            WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS |
+                                    WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+                }
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(0);
         }
     }
 
