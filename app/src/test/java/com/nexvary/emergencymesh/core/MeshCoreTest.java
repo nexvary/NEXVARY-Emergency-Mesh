@@ -3,6 +3,9 @@ package com.nexvary.emergencymesh.core;
 import org.junit.Test;
 
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -52,5 +55,26 @@ public class MeshCoreTest {
         } catch (GeneralSecurityException expected) {
             assertNotNull(expected);
         }
+    }
+
+    @Test public void radioChunksReassembleOutOfOrderAndRejectCorruption() {
+        String payload = "رسالة طوارئ طويلة ".repeat(90) + "END";
+        List<String> chunks = RadioChunker.split("msg-1050", payload, 120);
+        assertTrue(chunks.size() > 5);
+        List<String> shuffled = new ArrayList<>(chunks);
+        Collections.reverse(shuffled);
+        RadioChunker.Reassembler r = new RadioChunker.Reassembler(600_000L);
+        String result = null;
+        long now = 1_800_000_000_000L;
+        for (String chunk : shuffled) {
+            String maybe = r.offer(chunk, now++);
+            if (maybe != null) result = maybe;
+        }
+        assertEquals(payload, result);
+
+        String first = chunks.get(0);
+        String corrupt = first.substring(0, first.length() - 1) + (first.endsWith("A") ? "B" : "A");
+        RadioChunker.Reassembler bad = new RadioChunker.Reassembler(600_000L);
+        assertNull(bad.offer(corrupt, now));
     }
 }
