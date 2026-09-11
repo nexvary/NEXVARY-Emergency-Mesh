@@ -1,7 +1,9 @@
 package com.nexvary.emergencymesh;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -150,14 +152,15 @@ public final class MainActivity extends Activity {
     }
 
     private void addTelemetry(LinearLayout root) {
+        int pending = getSharedPreferences("mesh_state", MODE_PRIVATE).getInt("pending", 0);
         LinearLayout statRow1 = row();
-        statRow1.addView(statCard("12", s(R.string.nodes), CYAN), weightedWithMargin(5));
-        statRow1.addView(statCard("0", s(R.string.pending), PURPLE), weightedWithMargin(5));
+        statRow1.addView(statCard("0", s(R.string.nodes), CYAN), weightedWithMargin(5));
+        statRow1.addView(statCard(Integer.toString(pending), s(R.string.pending), PURPLE), weightedWithMargin(5));
         root.addView(statRow1, matchWrap());
 
         LinearLayout statRow2 = row();
-        statRow2.addView(statCard("10", s(R.string.trusted), GREEN), weightedWithMargin(5));
-        statRow2.addView(statCard("READY", s(R.string.radio), GOLD), weightedWithMargin(5));
+        statRow2.addView(statCard("0", s(R.string.trusted), GREEN), weightedWithMargin(5));
+        statRow2.addView(statCard(s(R.string.standby).toUpperCase(Locale.ROOT), s(R.string.radio), GOLD), weightedWithMargin(5));
         LinearLayout.LayoutParams lp = matchWrap();
         lp.topMargin = dp(9);
         root.addView(statRow2, lp);
@@ -174,10 +177,12 @@ public final class MainActivity extends Activity {
     }
 
     private void addTransportHealth(LinearLayout root) {
+        boolean bt = getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
+        boolean wifi = getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_DIRECT);
         LinearLayout box = sectionCard(BLUE);
         box.addView(text(R.string.transport_health, 17, BLUE, true));
-        box.addView(healthRow("◉", R.string.bluetooth, R.string.available, GREEN));
-        box.addView(healthRow("⌁", R.string.wifi_direct, R.string.standby, GOLD));
+        box.addView(healthRow("◉", R.string.bluetooth, bt ? R.string.available : R.string.not_connected, bt ? GREEN : RED));
+        box.addView(healthRow("⌁", R.string.wifi_direct, wifi ? R.string.available : R.string.not_connected, wifi ? CYAN : RED));
         box.addView(healthRow("⌁", R.string.meshtastic, R.string.not_connected, PURPLE));
         addSection(root, box, 12);
     }
@@ -189,7 +194,12 @@ public final class MainActivity extends Activity {
         TextView sosHint = text(R.string.sos_hint, 14, TEXT, false);
         sosHint.setPadding(0, dp(5), 0, dp(13));
         Button sosButton = actionButton("SOS", RED);
-        sosButton.setOnClickListener(v -> Toast.makeText(this, s(R.string.toast_sos), Toast.LENGTH_LONG).show());
+        sosButton.setOnClickListener(v -> {
+            int pending = getSharedPreferences("mesh_state", MODE_PRIVATE).getInt("pending", 0);
+            getSharedPreferences("mesh_state", MODE_PRIVATE).edit().putInt("pending", Math.min(999, pending + 1)).apply();
+            Toast.makeText(this, s(R.string.toast_sos), Toast.LENGTH_LONG).show();
+            recreate();
+        });
         sos.addView(sosTitle);
         sos.addView(sosHint);
         sos.addView(sosButton, matchHeight(dp(54)));
@@ -269,7 +279,7 @@ public final class MainActivity extends Activity {
         TextView label = text(labelRes, 14, TEXT, true);
         TextView arrow = plain(rtl ? "‹" : "›", 24, accent, true); arrow.setGravity(Gravity.CENTER);
         line.addView(ic, wrap()); line.addView(label, weighted()); line.addView(arrow, wrap());
-        line.setOnClickListener(v -> Toast.makeText(this, s(R.string.toast_action), Toast.LENGTH_SHORT).show());
+        line.setOnClickListener(v -> showModuleDialog(s(labelRes), accent));
         return line;
     }
 
@@ -284,7 +294,7 @@ public final class MainActivity extends Activity {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL); card.setGravity(Gravity.CENTER);
         card.setPadding(dp(10), dp(15), dp(10), dp(15)); card.setBackground(panel(CARD_2, accent, 18, 1));
-        TextView v = plain(value, value.length() > 5 ? 16 : 25, accent, true); v.setGravity(Gravity.CENTER);
+        TextView v = plain(value, value.length() > 7 ? 13 : (value.length() > 5 ? 16 : 25), accent, true); v.setGravity(Gravity.CENTER);
         TextView l = plain(label, 12, MUTED, false); l.setGravity(Gravity.CENTER); l.setPadding(0, dp(4), 0, 0);
         card.addView(v); card.addView(l); return card;
     }
@@ -296,8 +306,19 @@ public final class MainActivity extends Activity {
         TextView i = plain(icon, 27, accent, true); i.setGravity(Gravity.CENTER);
         TextView t = plain(label, 13, TEXT, true); t.setGravity(Gravity.CENTER); t.setPadding(0, dp(7), 0, 0);
         card.addView(i); card.addView(t);
-        card.setOnClickListener(v -> Toast.makeText(this, s(R.string.toast_action), Toast.LENGTH_SHORT).show());
+        card.setOnClickListener(v -> showModuleDialog(label, accent));
         return card;
+    }
+
+    private void showModuleDialog(String title, int accent) {
+        LinearLayout body = new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setPadding(dp(20), dp(10), dp(20), dp(4));
+        body.setLayoutDirection(rtl ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
+        body.addView(plain(s(R.string.status_ready), 15, GREEN, true));
+        TextView network = plain(s(R.string.network_id_value), 13, accent, true); network.setPadding(0, dp(10), 0, 0); body.addView(network);
+        TextView crypto = plain(s(R.string.encryption_value), 13, TEXT, false); crypto.setPadding(0, dp(8), 0, 0); body.addView(crypto);
+        new AlertDialog.Builder(this).setTitle(title).setView(body).setPositiveButton(android.R.string.ok, null).show();
     }
 
     private Button compactButton(String label, int accent) {
