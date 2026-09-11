@@ -1,0 +1,56 @@
+package com.nexvary.emergencymesh.core;
+
+import org.junit.Test;
+
+import java.security.GeneralSecurityException;
+
+import static org.junit.Assert.*;
+
+public class MeshCoreTest {
+    @Test public void packetRoundTripArabicAndRelay() {
+        long now = 1_800_000_000_000L;
+        MeshPacket p = MeshPacket.create("node-a", "rescue", "CHANNEL", "استغاثة عاجلة", now,
+                MeshPacket.Priority.EMERGENCY);
+        MeshPacket decoded = MeshPacket.decode(p.encode());
+        assertEquals("استغاثة عاجلة", decoded.body);
+        assertEquals(MeshPacket.Priority.EMERGENCY, decoded.priority);
+        assertEquals(7, decoded.maxHop);
+        assertTrue(decoded.canRelay(now + 1000));
+        assertEquals(1, decoded.relayed().hop);
+    }
+
+    @Test public void replayGuardRejectsDuplicateExpiredAndFuture() {
+        long now = 1_800_000_000_000L;
+        ReplayGuard guard = new ReplayGuard(64, 60_000L);
+        MeshPacket good = MeshPacket.create("a", "b", "NODE", "hello", now, MeshPacket.Priority.NORMAL);
+        assertTrue(guard.accept(good, now));
+        assertFalse(guard.accept(good, now));
+        MeshPacket expired = new MeshPacket("expired", "a", "b", "NODE", "x",
+                now - 100_000L, 1000L, 0, 5, MeshPacket.Priority.NORMAL);
+        assertFalse(guard.accept(expired, now));
+        MeshPacket future = new MeshPacket("future", "a", "b", "NODE", "x",
+                now + 120_000L, 100_000L, 0, 5, MeshPacket.Priority.NORMAL);
+        assertFalse(guard.accept(future, now));
+    }
+
+    @Test public void emergencyRetriesSooner() {
+        RetryPolicy p = new RetryPolicy(6, 2000L, 60_000L);
+        assertTrue(p.delayForAttempt(2, MeshPacket.Priority.EMERGENCY)
+                < p.delayForAttempt(2, MeshPacket.Priority.NORMAL));
+        assertEquals(6, p.maxAttempts());
+    }
+
+    @Test public void aesGcmRoundTripAndWrongPinFails() throws Exception {
+        MeshCrypto crypto = new MeshCrypto();
+        char[] pin = "839201".toCharArray();
+        String encrypted = crypto.encrypt("موقع الإنقاذ 31.2,29.9", pin, "CHANNEL:rescue");
+        assertNotEquals("موقع الإنقاذ 31.2,29.9", encrypted);
+        assertEquals("موقع الإنقاذ 31.2,29.9", crypto.decrypt(encrypted, pin, "CHANNEL:rescue"));
+        try {
+            crypto.decrypt(encrypted, "111111".toCharArray(), "CHANNEL:rescue");
+            fail("wrong PIN must fail authentication");
+        } catch (GeneralSecurityException expected) {
+            assertNotNull(expected);
+        }
+    }
+}
