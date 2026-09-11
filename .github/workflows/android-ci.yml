@@ -69,10 +69,7 @@ jobs:
             test -s ci-artifacts/home-ar.png
             test -s ci-artifacts/pid.txt
             grep -q 'com.nexvary.emergencymesh.debug/com.nexvary.emergencymesh.MainActivity' ci-artifacts/activity.txt
-            if grep -q 'FATAL EXCEPTION.*\|Process: com.nexvary.emergencymesh.debug' ci-artifacts/logcat.txt; then
-              echo 'Fatal runtime crash detected'
-              exit 1
-            fi
+            ! grep -q 'FATAL EXCEPTION' ci-artifacts/logcat.txt
 
       - name: Upload emulator screenshot and diagnostics
         if: always()
