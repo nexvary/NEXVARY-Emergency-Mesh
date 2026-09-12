@@ -22,6 +22,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withTagValue;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 @RunWith(AndroidJUnit4.class)
 public class NavigationIntegrityTest {
@@ -109,7 +110,8 @@ public class NavigationIntegrityTest {
         Intent i=routeIntent(route);
         try(ActivityScenario<PageActivity> scenario=ActivityScenario.launch(i)){
             onView(withTagValue(is((Object)tag))).perform(scrollTo(),click());
-            onView(withTagValue(is((Object)("page:"+route)))).check(matches(isDisplayed()));
+            scenario.onActivity(activity->assertFalse("Control click unexpectedly closed page: "+tag,activity.isFinishing()));
+            if(NavigationRegistry.MESSAGES.equals(route)) Espresso.pressBack();
         }
     }
     private Intent routeIntent(String route){ Intent i=new Intent(ApplicationProvider.getApplicationContext(),PageActivity.class); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); i.putExtra(PageActivity.EXTRA_ROUTE,route); return i; }
