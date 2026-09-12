@@ -6,12 +6,14 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
-        android:allowBackup="true"
-        android:label="NEXVARY Emergency Mesh"
+        android:allowBackup="false"
+        android:usesCleartextTraffic="false"
+        android:label="Yasli kurt"
         android:icon="@drawable/ic_app"
         android:roundIcon="@drawable/ic_app"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".PageActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
