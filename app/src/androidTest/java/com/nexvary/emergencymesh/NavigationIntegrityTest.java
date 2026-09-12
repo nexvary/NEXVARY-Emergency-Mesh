@@ -1,6 +1,9 @@
 package com.nexvary.emergencymesh;
 
+import android.content.Context;
 import android.content.Intent;
+import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
@@ -18,10 +21,12 @@ import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withTagValue;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(AndroidJUnit4.class)
 public class NavigationIntegrityTest {
     @Test public void everyHomeTabOpensCorrectPageAndBackReturnsHome(){
+        setLanguage("ar");
         try(ActivityScenario<MainActivity> scenario=ActivityScenario.launch(MainActivity.class)){
             for(String route: NavigationRegistry.links(NavigationRegistry.HOME)){
                 onView(withTagValue(is((Object)("nav:"+route)))).perform(scrollTo(),click());
@@ -33,6 +38,7 @@ public class NavigationIntegrityTest {
     }
 
     @Test public void everyInternalLinkNavigatesToDeclaredTarget(){
+        setLanguage("en");
         for(String source: NavigationRegistry.routes()){
             if(NavigationRegistry.HOME.equals(source)) continue;
             for(String target: NavigationRegistry.links(source)){
@@ -49,6 +55,7 @@ public class NavigationIntegrityTest {
     }
 
     @Test public void systemBackReturnsFromChildAndHomeBackShowsExitDialog(){
+        setLanguage("ar");
         try(ActivityScenario<MainActivity> scenario=ActivityScenario.launch(MainActivity.class)){
             onView(withTagValue(is((Object)"nav:messages"))).perform(scrollTo(),click());
             onView(withTagValue(is((Object)"page:messages"))).check(matches(isDisplayed()));
@@ -60,5 +67,46 @@ public class NavigationIntegrityTest {
             Espresso.pressBack();
             onView(withId(android.R.id.button1)).check(matches(isDisplayed())).perform(click());
         }
+    }
+
+    @Test public void arabicPersianUrduAreRtlAndEnglishIsLtr(){
+        assertRootDirection("ar", View.LAYOUT_DIRECTION_RTL);
+        assertRootDirection("fa", View.LAYOUT_DIRECTION_RTL);
+        assertRootDirection("ur", View.LAYOUT_DIRECTION_RTL);
+        assertRootDirection("en", View.LAYOUT_DIRECTION_LTR);
+    }
+
+    @Test public void languageButtonCyclesWithoutBreakingHome(){
+        setLanguage("ar");
+        try(ActivityScenario<MainActivity> scenario=ActivityScenario.launch(MainActivity.class)){
+            for(int i=0;i<10;i++){
+                onView(withTagValue(is((Object)"language"))).perform(click());
+                onView(withTagValue(is((Object)"page:home"))).check(matches(isDisplayed()));
+            }
+        }
+    }
+
+    @Test public void sosControlIsAlive(){
+        setLanguage("ar");
+        try(ActivityScenario<MainActivity> scenario=ActivityScenario.launch(MainActivity.class)){
+            onView(withTagValue(is((Object)"sos"))).perform(scrollTo(),click());
+            onView(withTagValue(is((Object)"page:home"))).check(matches(isDisplayed()));
+        }
+    }
+
+    private void assertRootDirection(String language,int expected){
+        setLanguage(language);
+        try(ActivityScenario<MainActivity> scenario=ActivityScenario.launch(MainActivity.class)){
+            scenario.onActivity(activity->{
+                ViewGroup scroll=(ViewGroup)activity.getWindow().getDecorView().findViewWithTag("page:home");
+                View root=scroll.getChildAt(0);
+                assertEquals(expected,root.getLayoutDirection());
+            });
+        }
+    }
+
+    private void setLanguage(String code){
+        Context c=ApplicationProvider.getApplicationContext();
+        c.getSharedPreferences("ui",Context.MODE_PRIVATE).edit().putString("language",code).commit();
     }
 }
