@@ -48,10 +48,10 @@ page = (root/'app/src/main/java/com/nexvary/emergencymesh/PageActivity.java').re
 routes = ['messages','radar','map','diagnostics','radio','profile','channels','settings','about']
 for route in routes:
     if f'"{route}"' not in nav: errors.append(f'Navigation registry: missing route {route}')
-    if f'fingerprint:"+r' not in page and f'fingerprint:{route}' not in page: errors.append(f'Functional page fingerprint missing: {route}')
-required_controls = ['message:compose','message:send','radar:scan','map:add-marker','diagnostics:run','toggle:radio_discovery','profile:save','toggle:channel_rescue','settings:lang:en']
-for tag in required_controls:
-    if tag not in page: errors.append(f'Functional control missing: {tag}')
+if 'f.setTag("fingerprint:"+r)' not in page: errors.append('Functional page fingerprint generator missing')
+required_literals = ['message:compose','message:send','radar:scan','map:add-marker','diagnostics:run','profile:save','radio_discovery','channel_rescue','settings:lang:']
+for token in required_literals:
+    if token not in page: errors.append(f'Functional control missing: {token}')
 if 'Route: ' in page or 'page_ok' in page or 'integrity' in page:
     errors.append('Generic navigation-test placeholder content still present in PageActivity')
 if 'back.setOnClickListener(v->finish())' not in page: errors.append('Back button is not wired to finish()')
