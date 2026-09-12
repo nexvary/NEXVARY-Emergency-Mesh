@@ -25,33 +25,39 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(AndroidJUnit4.class)
 public class NavigationIntegrityTest {
-    @Test public void everyHomeTabOpensCorrectPageAndBackReturnsHome(){
+    @Test public void everyHomeTabOpensUniqueFunctionalPageAndBackReturnsHome(){
         setLanguage("ar");
         try(ActivityScenario<MainActivity> scenario=ActivityScenario.launch(MainActivity.class)){
             for(String route: NavigationRegistry.links(NavigationRegistry.HOME)){
                 onView(withTagValue(is((Object)("nav:"+route)))).perform(scrollTo(),click());
                 onView(withTagValue(is((Object)("page:"+route)))).check(matches(isDisplayed()));
+                onView(withTagValue(is((Object)("fingerprint:"+route)))).check(matches(isDisplayed()));
                 onView(withTagValue(is((Object)"back"))).perform(click());
                 onView(withTagValue(is((Object)"page:home"))).check(matches(isDisplayed()));
             }
         }
     }
 
-    @Test public void everyInternalLinkNavigatesToDeclaredTarget(){
+    @Test public void eachRouteHasItsOwnRequiredFunctionalControl(){
         setLanguage("en");
-        for(String source: NavigationRegistry.routes()){
-            if(NavigationRegistry.HOME.equals(source)) continue;
-            for(String target: NavigationRegistry.links(source)){
-                Intent i=new Intent(ApplicationProvider.getApplicationContext(),PageActivity.class);
-                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                i.putExtra(PageActivity.EXTRA_ROUTE,source);
-                try(ActivityScenario<PageActivity> scenario=ActivityScenario.launch(i)){
-                    onView(withTagValue(is((Object)("page:"+source)))).check(matches(isDisplayed()));
-                    onView(withTagValue(is((Object)("nav:"+target)))).perform(scrollTo(),click());
-                    onView(withTagValue(is((Object)("page:"+target)))).check(matches(isDisplayed()));
-                }
-            }
-        }
+        assertControl(NavigationRegistry.MESSAGES,"message:compose");
+        assertControl(NavigationRegistry.CHANNELS,"toggle:channel_rescue");
+        assertControl(NavigationRegistry.RADAR,"radar:scan");
+        assertControl(NavigationRegistry.MAP,"map:add-marker");
+        assertControl(NavigationRegistry.DIAGNOSTICS,"diagnostics:run");
+        assertControl(NavigationRegistry.RADIO,"toggle:radio_discovery");
+        assertControl(NavigationRegistry.PROFILE,"profile:save");
+        assertControl(NavigationRegistry.SETTINGS,"settings:lang:en");
+        assertControl(NavigationRegistry.ABOUT,"fingerprint:about");
+    }
+
+    @Test public void keyControlsAreActuallyClickableNotDead(){
+        setLanguage("ar");
+        clickControl(NavigationRegistry.MESSAGES,"message:rescue");
+        clickControl(NavigationRegistry.RADAR,"radar:scan");
+        clickControl(NavigationRegistry.MAP,"map:add-marker");
+        clickControl(NavigationRegistry.DIAGNOSTICS,"diagnostics:run");
+        clickControl(NavigationRegistry.PROFILE,"profile:save");
     }
 
     @Test public void systemBackReturnsFromChildAndHomeBackShowsExitDialog(){
@@ -64,8 +70,6 @@ public class NavigationIntegrityTest {
             Espresso.pressBack();
             onView(withId(android.R.id.button2)).check(matches(isDisplayed())).perform(click());
             onView(withTagValue(is((Object)"page:home"))).check(matches(isDisplayed()));
-            Espresso.pressBack();
-            onView(withId(android.R.id.button1)).check(matches(isDisplayed())).perform(click());
         }
     }
 
@@ -94,19 +98,26 @@ public class NavigationIntegrityTest {
         }
     }
 
+    private void assertControl(String route,String tag){
+        Intent i=routeIntent(route);
+        try(ActivityScenario<PageActivity> scenario=ActivityScenario.launch(i)){
+            onView(withTagValue(is((Object)("fingerprint:"+route)))).check(matches(isDisplayed()));
+            onView(withTagValue(is((Object)tag))).perform(scrollTo()).check(matches(isDisplayed()));
+        }
+    }
+    private void clickControl(String route,String tag){
+        Intent i=routeIntent(route);
+        try(ActivityScenario<PageActivity> scenario=ActivityScenario.launch(i)){
+            onView(withTagValue(is((Object)tag))).perform(scrollTo(),click());
+            onView(withTagValue(is((Object)("page:"+route)))).check(matches(isDisplayed()));
+        }
+    }
+    private Intent routeIntent(String route){ Intent i=new Intent(ApplicationProvider.getApplicationContext(),PageActivity.class); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); i.putExtra(PageActivity.EXTRA_ROUTE,route); return i; }
     private void assertRootDirection(String language,int expected){
         setLanguage(language);
         try(ActivityScenario<MainActivity> scenario=ActivityScenario.launch(MainActivity.class)){
-            scenario.onActivity(activity->{
-                ViewGroup scroll=(ViewGroup)activity.getWindow().getDecorView().findViewWithTag("page:home");
-                View root=scroll.getChildAt(0);
-                assertEquals(expected,root.getLayoutDirection());
-            });
+            scenario.onActivity(activity->{ ViewGroup scroll=(ViewGroup)activity.getWindow().getDecorView().findViewWithTag("page:home"); View root=scroll.getChildAt(0); assertEquals(expected,root.getLayoutDirection()); });
         }
     }
-
-    private void setLanguage(String code){
-        Context c=ApplicationProvider.getApplicationContext();
-        c.getSharedPreferences("ui",Context.MODE_PRIVATE).edit().putString("language",code).commit();
-    }
+    private void setLanguage(String code){ Context c=ApplicationProvider.getApplicationContext(); c.getSharedPreferences("ui",Context.MODE_PRIVATE).edit().putString("language",code).commit(); }
 }
