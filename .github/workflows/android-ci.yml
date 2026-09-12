@@ -1,4 +1,4 @@
-name: Android CI + Emulator Screenshot
+name: Android CI + Navigation Integrity Gate
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 jobs:
   build-test-screenshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
 
     steps:
       - name: Checkout
@@ -29,23 +29,23 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Stage 1050 release gate
+      - name: UI Release Gate + security baseline
         run: python3 qa/release_gate.py
 
       - name: Enable KVM
         run: |
           if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
 
-      - name: Build, unit tests and lint
-        run: gradle --no-daemon clean assembleDebug testDebugUnitTest lintDebug
+      - name: Build, JVM tests, instrumentation APK and lint
+        run: gradle --no-daemon clean assembleDebug assembleDebugAndroidTest testDebugUnitTest lintDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: NEXVARY-Emergency-Mesh-debug-apk
+          name: Yasli-kurt-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Boot emulator, install APK and capture Arabic UI
+      - name: Navigation Integrity Gate on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
@@ -57,24 +57,34 @@ jobs:
             set -e
             mkdir -p ci-artifacts
             adb logcat -c
+            gradle --no-daemon connectedDebugAndroidTest
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb shell am force-stop com.nexvary.emergencymesh.debug
             adb shell am start -W -n com.nexvary.emergencymesh.debug/com.nexvary.emergencymesh.MainActivity > ci-artifacts/start.txt 2>&1
-            sleep 5
+            sleep 4
             adb shell pidof com.nexvary.emergencymesh.debug > ci-artifacts/pid.txt || true
             adb shell dumpsys activity activities > ci-artifacts/activity.txt
-            adb shell dumpsys window windows > ci-artifacts/window.txt
             adb logcat -d -v threadtime > ci-artifacts/logcat.txt
             adb exec-out screencap -p > ci-artifacts/home-ar.png
             test -s ci-artifacts/home-ar.png
             test -s ci-artifacts/pid.txt
             grep -q 'com.nexvary.emergencymesh.debug/com.nexvary.emergencymesh.MainActivity' ci-artifacts/activity.txt
             ! grep -q 'FATAL EXCEPTION' ci-artifacts/logcat.txt
+            adb shell wm size 720x1280
+            adb shell wm density 320
+            adb shell am force-stop com.nexvary.emergencymesh.debug
+            adb shell am start -W -n com.nexvary.emergencymesh.debug/com.nexvary.emergencymesh.MainActivity > /dev/null
+            sleep 3
+            adb exec-out screencap -p > ci-artifacts/home-compact-ar.png
+            test -s ci-artifacts/home-compact-ar.png
 
-      - name: Upload emulator screenshot and diagnostics
+      - name: Upload emulator screenshots, navigation reports and diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: NEXVARY-Emergency-Mesh-emulator-proof
-          path: ci-artifacts/
+          name: Yasli-kurt-navigation-integrity-proof
+          path: |
+            ci-artifacts/
+            app/build/reports/androidTests/connected/
+            app/build/outputs/androidTest-results/connected/
           if-no-files-found: warn
