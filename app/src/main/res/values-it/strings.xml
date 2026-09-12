@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Yasli kurt</string>
+    <string name="brand">YASLI KURT</string>
+    <string name="title">Rete di emergenza</string>
+    <string name="subtitle">Comunicazioni di emergenza decentralizzate senza Internet</string>
+</resources>
