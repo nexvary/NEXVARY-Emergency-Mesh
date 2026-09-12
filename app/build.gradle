@@ -10,8 +10,9 @@ android {
         applicationId 'com.nexvary.emergencymesh'
         minSdk 26
         targetSdk 35
-        versionCode 1050
-        versionName '2.1.0-stage1050'
+        versionCode 1100
+        versionName '2.2.0-stage1100'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
     buildTypes {
@@ -37,4 +38,8 @@ android {
 
 dependencies {
     testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+    androidTestImplementation 'androidx.test:core:1.6.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 }
