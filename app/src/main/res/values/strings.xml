@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">NEXVARY Emergency Mesh</string>
-    <string name="brand">NEXVARY</string>
+    <string name="app_name">Yasli kurt</string>
+    <string name="brand">YASLI KURT</string>
     <string name="title">شبكة الطوارئ</string>
     <string name="subtitle">اتصالات طوارئ لامركزية تعمل محليًا دون إنترنت</string>
     <string name="status_ready">جاهز للعمل دون اتصال</string>
@@ -24,11 +24,11 @@
     <string name="quick_access">الوصول السريع</string>
     <string name="field_identity">الهوية الميدانية</string>
     <string name="callsign">اسم النداء</string>
-    <string name="callsign_value">NEXVARY-01</string>
+    <string name="callsign_value">YK-01</string>
     <string name="role">الدور</string>
     <string name="role_value">فريق إنقاذ</string>
     <string name="network_id">معرّف الشبكة</string>
-    <string name="network_id_value">NX-MESH-7A3F</string>
+    <string name="network_id_value">YK-MESH-7A3F</string>
     <string name="encryption">التشفير</string>
     <string name="encryption_value">AES-256-GCM • NEM3</string>
     <string name="transport_health">صحة قنوات الاتصال</string>
@@ -46,8 +46,8 @@
     <string name="activity_one">استلام إشارة من عقدة إنقاذ قريبة</string>
     <string name="activity_two">قائمة الإرسال المحلية سليمة</string>
     <string name="activity_three">حماية Replay فعّالة</string>
-    <string name="stage_label">مرحلة التطوير 1050</string>
-    <string name="ci_verified">BUILD • LINT • JVM TESTS</string>
+    <string name="stage_label">مرحلة التطوير 1100</string>
+    <string name="ci_verified">BUILD • LINT • NAVIGATION GATE</string>
     <string name="settings">الإعدادات</string>
     <string name="profile">الملف الميداني</string>
 </resources>
