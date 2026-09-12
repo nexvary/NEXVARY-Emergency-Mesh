@@ -51,9 +51,9 @@ public final class MainActivity extends Activity {
         root.addView(top);
 
         TextView hero=text(tt("hero"),25,CYAN,true); hero.setPadding(0,dp(16),0,dp(6)); root.addView(hero);
-        root.addView(text("Bluetooth • Wi‑Fi Direct • Meshtastic/LoRa",14,MUTED,false));
+        TextView transports=text("Bluetooth • Wi‑Fi Direct • Meshtastic/LoRa",14,MUTED,false); transports.setTextDirection(View.TEXT_DIRECTION_LTR); transports.setGravity(rtl?Gravity.END:Gravity.START); root.addView(transports);
 
-        TextView badge=text("OFFLINE • ENCRYPTED • LOCAL-FIRST",11,GREEN,true); badge.setGravity(Gravity.CENTER); badge.setPadding(dp(10),dp(9),dp(10),dp(9)); badge.setBackground(panel(Color.rgb(7,37,31),GREEN));
+        TextView badge=text("OFFLINE • ENCRYPTED • LOCAL-FIRST",11,GREEN,true); badge.setTextDirection(View.TEXT_DIRECTION_LTR); badge.setGravity(Gravity.CENTER); badge.setPadding(dp(10),dp(9),dp(10),dp(9)); badge.setBackground(panel(Color.rgb(7,37,31),GREEN));
         LinearLayout.LayoutParams badgeLp=new LinearLayout.LayoutParams(-1,-2); badgeLp.topMargin=dp(14); root.addView(badge,badgeLp);
 
         root.addView(statusGrid(),spaceTop(14));
@@ -73,7 +73,14 @@ public final class MainActivity extends Activity {
         LinearLayout a=row(); a.addView(stat("0",tt("nodes"),CYAN),weight()); a.addView(stat("0",tt("pending"),PURPLE),weight()); wrap.addView(a);
         LinearLayout b=row(); b.addView(stat("0",tt("trusted"),GREEN),weight()); b.addView(stat(tt("standby"),tt("radio"),GOLD),weight()); LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2); lp.topMargin=dp(9); wrap.addView(b,lp); return wrap;
     }
-    private View identityCard(){ LinearLayout box=card(CYAN); box.addView(text(tt("identity"),18,CYAN,true)); box.addView(kv(tt("callsign"),"YK-01",PURPLE)); box.addView(kv(tt("role"),tt("rescue"),GREEN)); box.addView(kv(tt("encryption"),"AES-256-GCM • NEM3",GOLD)); return box; }
+    private View identityCard(){
+        LinearLayout box=card(CYAN);
+        box.addView(text(tt("identity"),18,CYAN,true));
+        box.addView(kvStack(tt("callsign"),"YK-01",PURPLE,true));
+        box.addView(kvStack(tt("role"),tt("rescue"),GREEN,false));
+        box.addView(kvStack(tt("encryption"),"AES-256-GCM • NEM3",GOLD,true));
+        return box;
+    }
     private View sosCard(){ LinearLayout box=card(RED); box.setBackground(panel(Color.rgb(44,8,18),RED)); box.addView(text(tt("sos"),22,RED,true)); TextView h=text(tt("sos_hint"),14,TEXT,false); h.setPadding(0,dp(6),0,dp(12)); box.addView(h); Button b=button("SOS",RED); b.setTag("sos"); b.setContentDescription("sos"); b.setOnClickListener(v->Toast.makeText(this,tt("sos"),Toast.LENGTH_LONG).show()); box.addView(b,new LinearLayout.LayoutParams(-1,dp(54))); return box; }
 
     private void addNavGrid(LinearLayout root,String[] routes){ for(int i=0;i<routes.length;i+=2){ LinearLayout line=row(); line.addView(navButton(routes[i]),weight()); if(i+1<routes.length)line.addView(navButton(routes[i+1]),weight()); else line.addView(new View(this),weight()); LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2); if(i>0)lp.topMargin=dp(9); root.addView(line,lp);} }
@@ -86,7 +93,13 @@ public final class MainActivity extends Activity {
     private String tt(String key){ return UiText.t(lang,key); }
     private LinearLayout row(){ LinearLayout l=new LinearLayout(this); l.setOrientation(LinearLayout.HORIZONTAL); l.setGravity(Gravity.CENTER_VERTICAL); l.setLayoutDirection(rtl?View.LAYOUT_DIRECTION_RTL:View.LAYOUT_DIRECTION_LTR); return l; }
     private LinearLayout card(int accent){ LinearLayout l=new LinearLayout(this); l.setOrientation(LinearLayout.VERTICAL); l.setPadding(dp(16),dp(16),dp(16),dp(16)); l.setLayoutDirection(rtl?View.LAYOUT_DIRECTION_RTL:View.LAYOUT_DIRECTION_LTR); l.setBackground(panel(CARD,accent)); return l; }
-    private View kv(String k,String v,int c){ LinearLayout l=row(); l.setPadding(0,dp(10),0,0); l.addView(text(k,13,MUTED,false),new LinearLayout.LayoutParams(0,-2,1f)); l.addView(text(v,13,c,true)); return l; }
+    private View kvStack(String key,String value,int color,boolean technical){
+        LinearLayout l=new LinearLayout(this); l.setOrientation(LinearLayout.VERTICAL); l.setPadding(0,dp(12),0,dp(2)); l.setLayoutDirection(rtl?View.LAYOUT_DIRECTION_RTL:View.LAYOUT_DIRECTION_LTR);
+        TextView k=text(key,12,MUTED,false); l.addView(k,new LinearLayout.LayoutParams(-1,-2));
+        TextView v=text(value,15,color,true); v.setPadding(0,dp(3),0,0);
+        if(technical){ v.setTextDirection(View.TEXT_DIRECTION_LTR); v.setGravity(rtl?Gravity.END:Gravity.START); }
+        l.addView(v,new LinearLayout.LayoutParams(-1,-2)); return l;
+    }
     private View stat(String v,String l,int c){ LinearLayout box=card(c); box.setGravity(Gravity.CENTER); TextView a=text(v,23,c,true); a.setGravity(Gravity.CENTER); TextView b=text(l,12,MUTED,false); b.setGravity(Gravity.CENTER); box.addView(a); box.addView(b); return box; }
     private Button button(String label,int accent){ Button b=new Button(this); b.setText(label); b.setAllCaps(false); b.setTextColor(TEXT); b.setTextSize(14); b.setTypeface(Typeface.DEFAULT,Typeface.BOLD); b.setBackground(panel(Color.rgb(16,27,46),accent)); return b; }
     private TextView text(String s,int sp,int c,boolean bold){ TextView t=new TextView(this); t.setText(s); t.setTextColor(c); t.setTextSize(sp); t.setTypeface(Typeface.DEFAULT,bold?Typeface.BOLD:Typeface.NORMAL); t.setTextDirection(rtl?View.TEXT_DIRECTION_RTL:View.TEXT_DIRECTION_LTR); t.setGravity((rtl?Gravity.END:Gravity.START)|Gravity.CENTER_VERTICAL); return t; }
