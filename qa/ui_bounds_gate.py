@@ -13,15 +13,21 @@ nodes=[]
 for n in root.iter('node'):
     if n.attrib.get('package','') != 'com.nexvary.emergencymesh.debug':
         continue
+    # Evaluate only actual interactive app controls. Android can report
+    # zero-sized system-decoration nodes under the app package, such as
+    # navigationBarBackground; those are not user controls and must not fail UI QA.
+    if n.attrib.get('clickable') != 'true':
+        continue
     m=rx.fullmatch(n.attrib.get('bounds',''))
-    if not m: continue
+    if not m:
+        print('UI BOUNDS GATE FAILED: clickable control without valid bounds', n.attrib)
+        sys.exit(1)
     x1,y1,x2,y2=map(int,m.groups())
     if x2<=x1 or y2<=y1:
-        print('UI BOUNDS GATE FAILED: zero-sized node', n.attrib)
+        print('UI BOUNDS GATE FAILED: zero-sized clickable control', n.attrib)
         sys.exit(1)
-    if n.attrib.get('clickable')=='true':
-        label=n.attrib.get('content-desc') or n.attrib.get('text') or n.attrib.get('resource-id') or 'unnamed'
-        nodes.append((label,(x1,y1,x2,y2)))
+    label=n.attrib.get('content-desc') or n.attrib.get('text') or n.attrib.get('resource-id') or 'unnamed'
+    nodes.append((label,(x1,y1,x2,y2)))
 
 if not nodes:
     print('UI BOUNDS GATE FAILED: no app clickable nodes')
