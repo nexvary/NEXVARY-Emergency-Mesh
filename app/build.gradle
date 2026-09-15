@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'com.yaslikurt.mesh'
+    namespace 'com.nexvary.emergencymesh'
     compileSdk 35
 
     defaultConfig {
